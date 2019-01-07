@@ -8,11 +8,12 @@
 import express from 'express';
 import morgan from 'morgan';
 
+// load custom modules
+import api from './routes/api';
+
 
 // initialize express
 const app = express();
-
-const router = express.Router();
 
 // parse incoming request body into JSON
 app.use(express.json());
@@ -20,15 +21,32 @@ app.use(express.json());
 // set the backend server port
 app.set('port', process.env.PORT || 3001);
 
-// use morgan for better console logging while in dev mode
+// use morgan for better console logging while in development mode
 app.use(morgan('dev'));
 
 // create base route for backend
-app.use('/api', router);
+app.use('/api', api);
 
-// response message at base route to ensure everything is working
-router.get('/', (req, res) => {
-  res.send(`<h1>You have reached the server API for the package weather app</h1>`)
+// main 404 route
+app.use((req, res) => {
+  res
+    .status(404)
+    .json({success: false, error: "Route not found"});
+})
+
+// global error handler
+app.use((err, req, res, next) => {
+  // log error info to server console
+  console.error(err.stack);
+
+  // send error details back to client
+  res
+    .status(err.status || 500)
+    .json({
+      success: false,
+      error: err.message
+    });
+
 });
 
 // start listening on our port
